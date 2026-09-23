@@ -1,4 +1,65 @@
-package com.fynk.app.ui.screens.passwordsetup
+import os
+
+base_dir = "/home/yadavkshitiz/Android/Fynk/frontend"
+
+files = {
+    "app/src/main/java/com/fynk/app/util/SecurityUtil.kt": """package com.fynk.app.util
+
+import android.util.Base64
+import java.security.MessageDigest
+import java.security.SecureRandom
+
+object SecurityUtil {
+    fun generateSalt(): String {
+        val random = SecureRandom()
+        val salt = ByteArray(16)
+        random.nextBytes(salt)
+        return Base64.encodeToString(salt, Base64.NO_WRAP)
+    }
+
+    fun hashPassword(password: String, salt: String): String {
+        val md = MessageDigest.getInstance("SHA-256")
+        md.update(Base64.decode(salt, Base64.NO_WRAP))
+        val hashedBytes = md.digest(password.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(hashedBytes, Base64.NO_WRAP)
+    }
+}
+""",
+    "app/src/main/java/com/fynk/app/data/datastore/SecurityPreferenceRepository.kt": """package com.fynk.app.data.datastore
+
+import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+class SecurityPreferenceRepository(private val context: Context) {
+    private val FRIEND_NAME_KEY = stringPreferencesKey("friend_name")
+    private val PASSWORD_HASH_KEY = stringPreferencesKey("password_hash")
+    private val UNLOCK_DURATION_KEY = intPreferencesKey("unlock_duration_minutes")
+    private val SETUP_COMPLETE_KEY = booleanPreferencesKey("is_password_setup_complete")
+
+    val isPasswordSetupCompleteFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SETUP_COMPLETE_KEY] ?: false
+    }
+
+    suspend fun saveSecuritySettings(
+        friendName: String,
+        passwordHash: String, // "salt:hash"
+        unlockDurationMinutes: Int
+    ) {
+        context.dataStore.edit { preferences ->
+            preferences[FRIEND_NAME_KEY] = friendName
+            preferences[PASSWORD_HASH_KEY] = passwordHash
+            preferences[UNLOCK_DURATION_KEY] = unlockDurationMinutes
+            preferences[SETUP_COMPLETE_KEY] = true
+        }
+    }
+}
+""",
+    "app/src/main/java/com/fynk/app/ui/screens/passwordsetup/PasswordSetupScreen.kt": """package com.fynk.app.ui.screens.passwordsetup
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
@@ -257,3 +318,13 @@ fun PasswordSetupScreen(
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
+"""
+}
+
+for path, content in files.items():
+    full_path = os.path.join(base_dir, path)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    with open(full_path, "w") as f:
+        f.write(content)
+
+print("Files created.")

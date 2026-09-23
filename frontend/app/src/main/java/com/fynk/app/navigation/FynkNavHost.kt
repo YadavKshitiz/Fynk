@@ -37,7 +37,15 @@ fun FynkNavHost(
                 }
             )
         }
-        composable(FynkDestinations.PasswordSetup.route) { PasswordSetupScreen() }
+        composable(FynkDestinations.PasswordSetup.route) {
+            PasswordSetupScreen(
+                onSaveComplete = {
+                    navController.navigate(FynkDestinations.Home.route) {
+                        popUpTo(FynkDestinations.PasswordSetup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(FynkDestinations.Home.route) { HomeScreen() }
         composable(FynkDestinations.AddApp.route) { AddAppScreen() }
         composable(FynkDestinations.SetLimit.route) { SetLimitScreen() }
