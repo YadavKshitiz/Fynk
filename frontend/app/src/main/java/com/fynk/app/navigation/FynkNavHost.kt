@@ -16,16 +16,27 @@ import com.fynk.app.ui.screens.blockscreen.BlockScreenScreen
 import com.fynk.app.ui.screens.passwordentry.PasswordEntryScreen
 
 @Composable
-fun FynkNavHost(modifier: Modifier = Modifier) {
+fun FynkNavHost(
+    startDestination: String = FynkDestinations.Onboarding.route,
+    modifier: Modifier = Modifier
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = FynkDestinations.Onboarding.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
-        composable(FynkDestinations.Onboarding.route) { OnboardingScreen() }
-        composable(FynkDestinations.Permissions.route) { PermissionsScreen() }
+        composable(FynkDestinations.Onboarding.route) { OnboardingScreen(navController) }
+        composable(FynkDestinations.Permissions.route) {
+            PermissionsScreen(
+                onContinueClick = {
+                    navController.navigate(FynkDestinations.PasswordSetup.route) {
+                        popUpTo(FynkDestinations.Permissions.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(FynkDestinations.PasswordSetup.route) { PasswordSetupScreen() }
         composable(FynkDestinations.Home.route) { HomeScreen() }
         composable(FynkDestinations.AddApp.route) { AddAppScreen() }
